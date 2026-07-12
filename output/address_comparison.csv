@@ -1,0 +1,6 @@
+address,assigned_elementary_school,nearest_preschool_mi,preschools_within_1mi,public_elem_within_1mi,private_elem_within_1mi
+"800 Sanchez St, San Francisco, CA",Harvey Milk Civil Rights Academy,0.13,2,11,12
+"1600 Holloway Ave, San Francisco, CA",Lakeshore Elementary School,,0,3,6
+"600 Clement St, San Francisco, CA",George Peabody Elementary School,,0,5,5
+"3200 24th St, San Francisco, CA",Cesar Chavez Elementary School,0.38,2,10,12
+"100 Joost Ave, San Francisco, CA",Glen Park Elementary School,0.87,1,9,5

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SF School Explorer</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>SF School Explorer</h1>
+    <p class="subtitle">Find your assigned school &amp; nearby options</p>
+  </header>
+
+  <form id="search-form">
+    <input type="text" id="address-input" placeholder="e.g. 800 Sanchez St, San Francisco, CA" autocomplete="off" required>
+    <label class="checkbox-row">
+      <input type="checkbox" id="public-only">
+      Public schools only
+    </label>
+    <button type="submit" id="search-btn">Search</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="map-embed-container"></div>
+  <div id="results"></div>
+
+  <footer>
+    Data: <a href="https://data.sfgov.org" target="_blank" rel="noopener">DataSF</a> open data portal &middot;
+    geocoding: <a href="https://geocoding.geo.census.gov" target="_blank" rel="noopener">US Census Bureau</a>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="shared/school-logic.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

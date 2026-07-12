@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "SF School Explorer",
+  "version": "1.0.0",
+  "description": "Type any San Francisco address and see its assigned SFUSD elementary school plus nearby school options by distance. Built on DataSF open data.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "host_permissions": [
+    "https://geocoding.geo.census.gov/*"
+  ],
+  "permissions": []
+}

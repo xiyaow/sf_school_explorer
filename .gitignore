@@ -1,0 +1,11 @@
+# Regenerable local cache — rebuild with `python etl.py`
+data/*.db
+data/*.db-journal
+
+# Python
+__pycache__/
+*.pyc
+
+# OS cruft
+.DS_Store
+Thumbs.db

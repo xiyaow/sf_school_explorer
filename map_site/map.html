@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SF School Explorer — Map</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="map.css">
+</head>
+<body>
+  <header id="topbar">
+    <h1>SF School Explorer</h1>
+    <form id="search-form">
+      <input type="text" id="address-input" placeholder="e.g. 800 Sanchez St, San Francisco, CA" autocomplete="off">
+      <label class="checkbox-row">
+        <input type="checkbox" id="public-only"> Public only
+      </label>
+      <button type="submit" id="search-btn">Search</button>
+    </form>
+  </header>
+
+  <div id="body-layout">
+    <div id="map-wrap">
+      <div id="map"></div>
+      <div id="legend">
+        <div><span class="dot assigned"></span> Assigned elementary school</div>
+        <div><span class="dot public"></span> Public</div>
+        <div><span class="dot private"></span> Private</div>
+        <div><span class="dot preschool"></span> Preschool</div>
+      </div>
+      <div id="error-banner" hidden></div>
+    </div>
+    <aside id="results-panel">
+      <div id="status"></div>
+      <div id="results"></div>
+    </aside>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="shared/school-logic.js"></script>
+  <script src="map.js"></script>
+  <script>
+    (function loadGoogleMaps() {
+      if (!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "YOUR_API_KEY_HERE") {
+        document.getElementById("error-banner").hidden = false;
+        document.getElementById("error-banner").textContent =
+          "config.js has no Google Maps API key set yet.";
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&loading=async&callback=initMap`;
+      script.async = true;
+      document.head.appendChild(script);
+    })();
+  </script>
+</body>
+</html>
