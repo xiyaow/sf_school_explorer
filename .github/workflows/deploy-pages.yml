@@ -1,4 +1,4 @@
-name: Deploy map site to GitHub Pages
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -23,16 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate config.js from secret
+      - name: Generate map config from secret
         run: |
           sed "s|__GOOGLE_MAPS_API_KEY__|${{ secrets.GOOGLE_MAPS_API_KEY }}|" \
-            config.template.js > config.js
+            docs/config.template.js > docs/config.js
 
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: docs
 
       - id: deployment
         uses: actions/deploy-pages@v4
