@@ -19,6 +19,7 @@ let geocoder;
 let schoolsData, attendanceAreas;
 let activeMarkers = [];
 let activePolygons = [];
+let detailsInfoWindow;
 
 function markerColor(school, isAssigned) {
   if (isAssigned) return "#f9a825";
@@ -90,15 +91,47 @@ function escapeHtml(str) {
   return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function schoolCardHtml(s) {
+function escapeAttribute(str) {
+  return escapeHtml(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function websiteLinkHtml(website) {
+  if (!website || website === "No Data") return "";
+  const url = /^https?:\/\//i.test(website) ? website : `https://${website}`;
+  try {
+    const parsed = new URL(url);
+    if (!/^https?:$/.test(parsed.protocol)) return "";
+    return `<a class="school-website" href="${escapeHtml(parsed.href)}" target="_blank" rel="noopener">School website</a>`;
+  } catch {
+    return "";
+  }
+}
+
+function schoolNameKey(name) {
+  const genericWords = new Set(["academy", "elementary", "school", "schools", "the"]);
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(" ")
+    .filter((word) => word && !genericWords.has(word))
+    .sort()
+    .join(" ");
+}
+
+function isAssignedSchool(school, area) {
+  return Boolean(area) && schoolNameKey(school.school) === schoolNameKey(area.assigned_school);
+}
+
+function schoolCardHtml(s, isAssigned = false) {
   const kind = s.public ? "Public" : "Private";
   const badgeClass = s.public ? "public" : "private";
   return `
-    <div class="school-card">
+    <div class="school-card${isAssigned ? " assigned-school" : ""}" role="button" tabindex="0" data-lat="${s.lat}" data-lon="${s.lon}" data-school="${escapeAttribute(s.school)}" data-type="${escapeAttribute(s.entity_type)}" data-grades="${escapeAttribute(s.low_grade)}-${escapeAttribute(s.high_grade)}" data-distance="${s.distance_mi.toFixed(2)}">
       <span class="dist">${s.distance_mi.toFixed(2)} mi</span>
-      <div class="name">${escapeHtml(s.school)}<span class="badge ${badgeClass}">${kind}</span></div>
+      <div class="name">${escapeHtml(s.school)}${isAssigned ? '<span class="badge assigned">Assigned school</span>' : ""}<span class="badge ${badgeClass}">${kind}</span></div>
       <div class="meta">${escapeHtml(s.entity_type)} &middot; grades ${escapeHtml(s.low_grade)}-${escapeHtml(s.high_grade)}</div>
       <div class="meta">${escapeHtml(s.street_address || "")}</div>
+      ${websiteLinkHtml(s.website)}
     </div>`;
 }
 
@@ -117,11 +150,28 @@ function renderResultsPanel(area, tiers) {
     const list = tiers[t];
     html += `<div class="tier">
       <div class="tier-title">${tierLabel(lower, t)} (${list.length})</div>
-      ${list.length ? list.map(schoolCardHtml).join("") : '<div class="meta" style="color:#999;">No schools in this band.</div>'}
+      ${list.length ? list.map((school) => schoolCardHtml(school, isAssignedSchool(school, area))).join("") : '<div class="meta" style="color:#999;">No schools in this band.</div>'}
     </div>`;
     lower = t;
   }
   resultsEl.innerHTML = html;
+}
+
+function focusSchoolCard(card) {
+  const lat = Number(card.dataset.lat);
+  const lon = Number(card.dataset.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+  map.panTo({ lat, lng: lon });
+  map.setZoom(16);
+  detailsInfoWindow.setContent(`
+    <div style="font-size:13px;max-width:220px;">
+      <strong>${escapeHtml(card.dataset.school)}</strong><br>
+      ${escapeHtml(card.dataset.type)} &middot; grades ${escapeHtml(card.dataset.grades)}<br>
+      ${card.dataset.distance} mi away
+    </div>`);
+  detailsInfoWindow.setPosition({ lat, lng: lon });
+  detailsInfoWindow.open(map);
 }
 
 async function renderForCoords(lat, lon, address, publicOnly = false) {
@@ -177,7 +227,7 @@ async function renderForCoords(lat, lon, address, publicOnly = false) {
 
   const infoWindow = new google.maps.InfoWindow();
   for (const school of toPlot) {
-    const isAssigned = area && school.school === area.assigned_school;
+    const isAssigned = isAssignedSchool(school, area);
     const marker = new google.maps.Marker({
       position: { lat: school.lat, lng: school.lon },
       map,
@@ -232,12 +282,27 @@ async function initMap() {
     zoom: 12,
   });
   geocoder = new google.maps.Geocoder();
+  detailsInfoWindow = new google.maps.InfoWindow();
 
   document.getElementById("search-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const address = document.getElementById("address-input").value.trim();
     const publicOnly = document.getElementById("public-only").checked;
     handleSearch(address, publicOnly);
+  });
+
+  document.getElementById("results").addEventListener("click", (e) => {
+    if (e.target.closest("a")) return;
+    const card = e.target.closest(".school-card");
+    if (card) focusSchoolCard(card);
+  });
+  document.getElementById("results").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest(".school-card");
+    if (card) {
+      e.preventDefault();
+      focusSchoolCard(card);
+    }
   });
 
   // If opened with ?lat=&lon= (e.g. from the extension's iframe), skip

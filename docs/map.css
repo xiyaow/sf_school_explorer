@@ -147,6 +147,17 @@ body {
   margin-bottom: 6px;
   background: #fff;
   font-size: 12.5px;
+  cursor: pointer;
+}
+
+.school-card:focus {
+  outline: 3px solid #90caf9;
+  outline-offset: 1px;
+}
+
+.school-card.assigned-school {
+  border: 2px solid #f9a825;
+  background: #fff9e5;
 }
 
 .school-card .name { font-weight: 600; }
@@ -155,6 +166,13 @@ body {
   color: var(--muted);
   font-size: 11.5px;
   margin-top: 1px;
+}
+
+.school-website {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--blue-dark);
 }
 
 .badge {
@@ -169,6 +187,7 @@ body {
 
 .badge.public { background: #e3f4e6; color: #256d34; }
 .badge.private { background: #fdeadb; color: #a45c0a; }
+.badge.assigned { background: #fff0bf; color: #7a5400; }
 
 .dist { float: right; color: var(--blue-dark); font-weight: 600; }
 
