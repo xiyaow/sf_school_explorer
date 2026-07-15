@@ -1,56 +1,78 @@
-# map_site — GitHub Pages map for SF School Explorer
+# SF School Explorer
 
-A static page that renders search results (assigned SFUSD elementary school
-+ nearby schools) on an interactive Google Map. It works standalone (type
-an address right on the page — geocoding uses `google.maps.Geocoder`, part
-of the Maps JS SDK, which isn't subject to the CORS restriction a raw API
-call would hit from a plain webpage) and can also be embedded in the
-extension's popup via iframe, passing `?lat=&lon=&address=` in the URL.
+This GitHub Pages site is the public map view for **SF School Explorer**. Type a
+San Francisco address, and it shows:
 
-## Deploy it (two options for the API key)
+- the assigned SFUSD elementary attendance area for that address
+- the closest schools in the bundled school dataset
+- school details such as address, grade range, distance, and website when the
+  source data includes one
 
-Either way, first: get a Google Maps JavaScript API key at
-console.cloud.google.com -> create/select a project -> APIs & Services ->
-Library -> enable **Maps JavaScript API** -> Credentials -> Create API key.
-Then **restrict it**: Credentials -> click the key -> Application
-restrictions -> Websites -> `https://YOUR_GITHUB_USERNAME.github.io/*`, and
-API restrictions -> limit to Maps JavaScript API only. This restriction is
-the real protection here — the key is client-side JS, so it's visible to
-anyone who checks the live page's source no matter which option below you
-pick; the restriction is what stops someone else from using it.
+[Open the interactive map](map.html)
 
-**Option A — simple (key committed to the repo):**
+## Project Architecture
 
-1. Paste your key into `config.js`, replacing `YOUR_API_KEY_HERE`.
-2. Push `map_site/` to a GitHub repo, enable Pages (Settings -> Pages ->
-   Deploy from a branch -> `main` / root).
-3. Copy the resulting `<pages-url>/map.html` into `../extension/config.js`
-   (`MAP_SITE_URL`) if you're using it with the extension.
+```text
+DataSF APIs
+  -> etl.py
+     pulls raw school and attendance-area records into SQLite
+  -> school_finder.py / shared school logic
+     matches an address point to an attendance polygon and computes distances
+  -> export_for_extension.py
+     exports static JSON and GeoJSON files
+  -> docs/
+     serves the GitHub Pages map with no backend server
+```
 
-**Option B — key kept out of git history (GitHub Actions + secret):**
+The live map is a static frontend. It loads:
 
-1. Don't touch `config.js` — leave it as the committed placeholder.
-2. In the repo: Settings -> Secrets and variables -> Actions -> New
-   repository secret. Name it `GOOGLE_MAPS_API_KEY`, paste your key as the
-   value.
-3. In the repo: Settings -> Pages -> Source -> **GitHub Actions** (not
-   "Deploy from a branch").
-4. Push `map_site/` including the `.github/workflows/deploy-pages.yml`
-   file included here. On push to `main`, the workflow generates `config.js`
-   from `config.template.js` + the secret, and deploys it — the filled-in
-   `config.js` never gets committed (it's gitignored).
-5. For local testing, copy `config.template.js` to `config.js` yourself and
-   paste your key in — it won't be committed since `config.js` is
-   gitignored.
+- `data/schools.json` for school names, locations, grade ranges, addresses,
+  school type, and website fields
+- `data/attendance_areas.geojson` for SFUSD elementary attendance-area polygons
+- `shared/school-logic.js` for point-in-polygon lookup and distance grouping
+- Google Maps JavaScript API and Geocoding API for the map display and address
+  search
 
-## Refreshing the data
+Because the data is exported into static files, GitHub Pages can host the app
+without a Python server or database running behind it.
 
-`schools.json` / `attendance_areas.geojson` in `data/` are static exports —
-rerun `python export_for_extension.py` from the project root whenever you
-refresh `etl.py`'s data, then push the updated `map_site/data/*` files.
+## Data Sources
 
-## Using it standalone
+- [Schools](https://data.sfgov.org/d/7e7j-59qk) from DataSF, resource
+  `7e7j-59qk`. This includes public, private, and preschool records with
+  location fields and school attributes.
+- [SFUSD School Attendance Areas (2024-2025)](https://data.sfgov.org/d/e6tr-sxwg)
+  from DataSF, resource `e6tr-sxwg`. This provides elementary attendance-area
+  boundary polygons.
+- [Google Maps Platform](https://developers.google.com/maps/documentation)
+  powers the interactive map and address geocoding on this static page.
 
-`map.html` also works on its own (not just inside the extension's iframe):
-`map.html?lat=37.7563&lon=-122.4302&address=800+Sanchez+St` — useful for
-testing or sharing a direct link to one result.
+The original Python pipeline pulls the DataSF records through the Socrata REST
+API at `https://data.sfgov.org/resource/<resource-id>.json`.
+
+## Refreshing The Published Data
+
+From the project root, run:
+
+```bash
+python etl.py
+python export_for_extension.py
+```
+
+Then commit and push the updated files under `docs/data/`. GitHub Pages will
+serve the refreshed static exports after the repository updates.
+
+## Local Testing
+
+From the `docs/` folder:
+
+```bash
+python -m http.server 8000
+```
+
+Then open `http://localhost:8000/map.html`.
+
+For local search to work, the Google API key used by `config.js` needs both
+**Maps JavaScript API** and **Geocoding API** enabled, and the key's website
+restriction should include the local test origin, for example
+`http://localhost:8000/*`.
