@@ -21,6 +21,8 @@ let activeMarkers = [];
 let activePolygons = [];
 let detailsInfoWindow;
 
+const DEFAULT_ADDRESS = "800 Sanchez St, San Francisco, CA";
+
 function markerColor(school, isAssigned) {
   if (isAssigned) return "#f9a825";
   if (school.entity_type === "Preschool") return "#6a1b9a";
@@ -260,14 +262,15 @@ async function renderForCoords(lat, lon, address, publicOnly = false) {
 }
 
 async function handleSearch(address, publicOnly) {
-  if (!address) return;
+  const searchAddress = address || DEFAULT_ADDRESS;
+  document.getElementById("address-input").value = searchAddress;
   const btn = document.getElementById("search-btn");
   btn.disabled = true;
   setStatus("Geocoding address…");
   try {
-    const coords = await geocodeWithGoogle(address);
+    const coords = await geocodeWithGoogle(searchAddress);
     setStatus("");
-    await renderForCoords(coords.lat, coords.lon, address, publicOnly);
+    await renderForCoords(coords.lat, coords.lon, searchAddress, publicOnly);
   } catch (err) {
     console.error(err);
     setStatus(err.message, true);

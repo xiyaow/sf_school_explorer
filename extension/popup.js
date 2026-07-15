@@ -14,6 +14,7 @@
 //     an iframe embeds a live Google Map of the results.
 
 const CENSUS_GEOCODER = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
+const DEFAULT_ADDRESS = "800 Sanchez St, San Francisco, CA";
 
 let schoolsData = null;
 let attendanceAreas = null;
@@ -143,12 +144,13 @@ function setStatus(msg, isError = false) {
 
 document.getElementById("search-form").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const address = document.getElementById("address-input").value.trim();
+  const addressInput = document.getElementById("address-input");
+  const address = addressInput.value.trim() || DEFAULT_ADDRESS;
+  addressInput.value = address;
   const publicOnly = document.getElementById("public-only").checked;
   const btn = document.getElementById("search-btn");
   document.getElementById("results").innerHTML = "";
   document.getElementById("map-embed-container").innerHTML = "";
-  if (!address) return;
 
   btn.disabled = true;
   setStatus("Loading school data…");
